@@ -1,6 +1,35 @@
 # Bootstrap Server for Network Overlay System
 
-This project implements a bootstrap server for a network overlay system using UDP datagram sockets. The server listens on port 55555 and handles registration, unregistration, and echo commands from clients.
+This project implements a bootstrap server for a network overlay system using UDP datagram sockets. The server listens on port `55555` and handles registration, unregistration, and echo commands from clients.
+
+> Use Java 11
+
+## Initializing the Overlay Network
+
+1. Initialize a Docker Overlay network. The VPS server as the Swarm Manager Node.
+    1. `docker swarm init`.
+2. Join other worker nodes to the Swarm Network using the provided command.
+3. Create an `Overlay` network from within the Swarm Manager using below command.
+    1. `docker network create --driver overlay --attachable node-network`.
+4. Build the `BootstrapServer` docker image in the VPS Server.
+
+    1. ```bash
+        cd repository/server
+        docker build -t bootstrap-server
+       ```
+
+5. Run the docker image for the Bootstrap Server in the Swarm Manager attaching the container to the `node-network` created above.
+    1. `docker run -d -p 55555:55555 --network node-network bootstrap-server`.
+6. Build the `BootstrapClient` docker image in each worker node.
+
+    1. ```bash
+        cd repository/client
+        docker build -t bootstrap-client
+       ```
+
+7. Run the client containers from within the worker nodes attaching to the `node-network` as well.
+    1. `docker run -it --network node-network bootstrap-client`.
+8. Proceed with the command executions from within each worker node as required.
 
 ## Features
 
@@ -44,17 +73,22 @@ Everything is set to play with the provided commands...
 - **REG**: Register with the server.
   - Prompts: IP, port, username
   - Example:
+
     ```plaintext
     0048 REG 127.0.0.1 55556 user1
     ```
+
 - **UNREG**: Unregister from the server.
   - Prompts: IP, port, username
   - Example:
+
     ```plaintext
     0048 UNREG 127.0.0.1 55556 user1
     ```
+
 - **ECHO**: Request the server to list all registered nodes.
   - Example:
+
     ```plaintext
     0012 ECHO
     ```
