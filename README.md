@@ -2,9 +2,23 @@
 
 This project implements a bootstrap server for a network overlay system using UDP datagram sockets. The server listens on port `55555` and handles registration, unregistration, and echo commands from clients.
 
-> Use Java 11
+## Getting Started
+
+### Clone the Repository
+
+```sh
+git clone https://github.com/shafraz17/NetowrkOverlay.git
+cd NetworkOverlay
+```
+
+## Requirements
+
+- Java Development Kit (JDK) 8 or higher
 
 ## Initializing the Overlay Network
+
+> Points 4-7 are automated with scripts - `run-client.(sh/bat)` & `run-server.(sh/bat)`. Choose the appropriate script based on your system.
+> Execute the appropriate script based on your role within the network. (Server - `run-server`/Workers - `run-client`).
 
 1. Initialize a Docker Overlay network. The VPS server as the Swarm Manager Node.
     1. `docker swarm init`.
@@ -14,7 +28,7 @@ This project implements a bootstrap server for a network overlay system using UD
 4. Build the `BootstrapServer` docker image in the VPS Server.
 
     1. ```bash
-        cd repository/server
+        cd server
         docker build -t bootstrap-server
        ```
 
@@ -23,7 +37,7 @@ This project implements a bootstrap server for a network overlay system using UD
 6. Build the `BootstrapClient` docker image in each worker node.
 
     1. ```bash
-        cd repository/client
+        cd client
         docker build -t bootstrap-client
        ```
 
@@ -31,24 +45,40 @@ This project implements a bootstrap server for a network overlay system using UD
     1. `docker run -it --network node-network bootstrap-client`.
 8. Proceed with the command executions from within each worker node as required.
 
+## Client Commands
+
+### Everything is set to play with the provided commands
+
+- **`REG`**: Register with the server.
+  - Prompts: IP, port, username
+  - Example:
+
+    ```plaintext
+    0048 REG 127.0.0.1 55556 user1
+    ```
+
+- **`UNREG`**: Unregister from the server.
+  - Prompts: IP, port, username
+  - Example:
+
+    ```plaintext
+    0048 UNREG 127.0.0.1 55556 user1
+    ```
+
+- **`ECHO`**: Request the server to list all registered nodes.
+  - Example:
+
+    ```plaintext
+    0012 ECHO
+    ```
+
 ## Features
 
 - **Registration (`REG`)**: Clients can register with the server by providing their IP, port, and username.
 - **Unregistration (`UNREG`)**: Clients can unregister from the server.
 - **Echo (`ECHO`)**: Clients can request the server to list all registered nodes.
 
-## Requirements
-
-- Java Development Kit (JDK) 8 or higher
-
-## Getting Started
-
-### Clone the Repository
-
-```sh
-git clone https://github.com/shafraz17/NetowrkOverlay.git
-cd NetworkOverlay
-```
+## Manual execution of the applications (without Docker)
 
 ### Compile the Server and Client
 
@@ -65,30 +95,3 @@ User the below commands in separate terminals
 java BootstrapServer
 java BootstrapClient
 ```
-
-Everything is set to play with the provided commands...
-
-## Client Commands
-
-- **REG**: Register with the server.
-  - Prompts: IP, port, username
-  - Example:
-
-    ```plaintext
-    0048 REG 127.0.0.1 55556 user1
-    ```
-
-- **UNREG**: Unregister from the server.
-  - Prompts: IP, port, username
-  - Example:
-
-    ```plaintext
-    0048 UNREG 127.0.0.1 55556 user1
-    ```
-
-- **ECHO**: Request the server to list all registered nodes.
-  - Example:
-
-    ```plaintext
-    0012 ECHO
-    ```
