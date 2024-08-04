@@ -26,7 +26,7 @@ fi
 
 # Run the Docker container
 echo "Running Docker container..."
-docker run -d --name $CONTAINER_NAME -p $PORT:$PORT --network $NETWORK $IMAGE_NAME
+docker run -d --name $CONTAINER_NAME -p $PORT:$PORT/udp --network $NETWORK $IMAGE_NAME
 if [ $? -ne 0 ]; then
     echo "Error: Failed to start Docker container."
     exit 1

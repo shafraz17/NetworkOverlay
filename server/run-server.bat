@@ -26,7 +26,7 @@ if %ERRORLEVEL% equ 0 (
 
 REM Run the Docker container
 echo Running Docker container...
-docker run -d --name %CONTAINER_NAME% -p %PORT%:%PORT% --network %NETWORK% %IMAGE_NAME%
+docker run -d --name %CONTAINER_NAME% -p %PORT%:%PORT%/udp --network %NETWORK% %IMAGE_NAME%
 if %ERRORLEVEL% neq 0 (
     echo Error: Failed to start Docker container.
     exit /b %ERRORLEVEL%
