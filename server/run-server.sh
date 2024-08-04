@@ -18,7 +18,7 @@ fi
 
 # Check if a container with the same name is already running
 echo "Checking for existing containers..."
-if [ $(docker container ls -a --filter name=%CONTAINER_NAME%) ]; then
+if [ $(docker container ls -a --filter name=$CONTAINER_NAME) ]; then
     echo "Stopping existing container..."
     docker stop $CONTAINER_NAME
     docker rm $CONTAINER_NAME

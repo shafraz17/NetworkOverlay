@@ -9,7 +9,7 @@ public class BootstrapClient {
         Scanner scanner = new Scanner(System.in);
         try {
             DatagramSocket socket = new DatagramSocket();
-            InetAddress address = InetAddress.getByName("localhost"); // Change to server's address if needed
+            InetAddress address = InetAddress.getByName("23.94.83.39"); // Change to server's address if needed
             int serverPort = 55555;
 
             while (true) {
