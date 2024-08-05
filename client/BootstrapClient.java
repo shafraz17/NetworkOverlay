@@ -1,7 +1,8 @@
-import java.net.DatagramPacket;
-import java.net.DatagramSocket;
-import java.net.InetAddress;
+import java.net.*;
 import java.util.Scanner;
+import java.util.Random;
+import java.io.BufferedReader;
+import java.io.InputStreamReader;
 
 public class BootstrapClient {
 
@@ -13,7 +14,7 @@ public class BootstrapClient {
             int serverPort = 55555;
 
             while (true) {
-                System.out.println("Enter command (REG, UNREG, ECHO, or QUIT to exit):");
+                System.out.println("Enter command (REG, UNREG, ECHO, DOWNLOAD, or QUIT to exit):");
                 String command = scanner.nextLine();
 
                 if (command.equalsIgnoreCase("QUIT")) {
@@ -43,6 +44,13 @@ public class BootstrapClient {
                     case "ECHO":
                         message = "0012 ECHO";
                         break;
+                    case "DOWNLOAD":
+                        System.out.println("Enter the IP of the node:");
+                        ip = scanner.nextLine();
+                        System.out.println("Enter the port of the node:");
+                        port = Integer.parseInt(scanner.nextLine());
+//                        scanner.close();
+                        downloadFile(ip, port);
                     default:
                         System.out.println("Invalid command!");
                         continue;
@@ -63,6 +71,38 @@ public class BootstrapClient {
             e.printStackTrace();
         } finally {
             scanner.close();
+        }
+    }
+
+    private static void downloadFile(String ip, Integer port) {
+        try {
+            int size = new Random().nextInt(7) + 3; // Generate a size between 2 and 10 MB
+            String url = STR."http://\{ip}:\{port + 1}/file?size=\{size}";
+//            String url = STR."http://localhost:\{port + 1}/file?size=\{size}";
+
+            URL obj = URI.create(url).toURL();
+            HttpURLConnection con = (HttpURLConnection) obj.openConnection();
+            con.setRequestMethod("GET");
+
+            int responseCode = con.getResponseCode();
+
+            if (responseCode == HttpURLConnection.HTTP_OK) { // success
+                BufferedReader in = new BufferedReader(new InputStreamReader(con.getInputStream()));
+                String inputLine;
+                StringBuilder response = new StringBuilder();
+
+                while ((inputLine = in.readLine()) != null) {
+                    response.append(inputLine).append("\n");
+                }
+                in.close();
+
+                System.out.println(STR."File size: \{size}MB");
+                System.out.println(STR."Response: \{response.toString()}");
+            } else {
+                System.out.println("GET request not worked");
+            }
+        } catch (Exception e) {
+            e.printStackTrace();
         }
     }
 }
