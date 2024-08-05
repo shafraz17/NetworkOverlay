@@ -9,8 +9,8 @@ import java.util.Date;
 
 public class BootstrapClient {
 
-    private static final String LOG_FILE = "client_log.txt"; // Path to log file
-    private static int hopCounter = 0; // Track number of application-level hops
+    private static final String LOG_FILE = "client_log.txt";
+    private static int hopCounter = 0;
 
     public static void main(String[] args) {
         Scanner scanner = new Scanner(System.in);
@@ -18,7 +18,7 @@ public class BootstrapClient {
              FileWriter fileWriter = new FileWriter(LOG_FILE, true); // Append mode
              PrintWriter logWriter = new PrintWriter(fileWriter)) {
 
-            InetAddress address = InetAddress.getByName("localhost"); // Change to server's address if needed
+            InetAddress address = InetAddress.getByName("23.94.83.39");
             int serverPort = 55555;
 
             while (true) {

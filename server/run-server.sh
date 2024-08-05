@@ -18,7 +18,7 @@ fi
 
 # Check if a container with the same name is already running
 echo "Checking for existing containers..."
-if [ $(docker container ls -a --filter name=%CONTAINER_NAME%) ]; then
+if [ $(docker container ls -a --filter name=$CONTAINER_NAME) ]; then
     echo "Stopping existing container..."
     docker stop $CONTAINER_NAME
     docker rm $CONTAINER_NAME
@@ -26,7 +26,7 @@ fi
 
 # Run the Docker container
 echo "Running Docker container..."
-docker run -d --name $CONTAINER_NAME -p $PORT:$PORT --network $NETWORK $IMAGE_NAME
+docker run -d --name $CONTAINER_NAME -p $PORT:$PORT/udp --network $NETWORK $IMAGE_NAME
 if [ $? -ne 0 ]; then
     echo "Error: Failed to start Docker container."
     exit 1
