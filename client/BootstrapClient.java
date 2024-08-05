@@ -4,8 +4,8 @@ import java.io.PrintWriter;
 import java.net.DatagramPacket;
 import java.net.DatagramSocket;
 import java.net.InetAddress;
-import java.util.Scanner;
 import java.util.Date;
+import java.util.Scanner;
 
 public class BootstrapClient {
 
@@ -62,6 +62,13 @@ public class BootstrapClient {
                         continue;
                 }
 
+                // Print request details to console
+                System.out.println("================================");
+                System.out.println("Sending request:");
+                System.out.println("Command: " + command);
+                System.out.println("Message: " + message);
+                System.out.println("Request Details: " + requestMessage);
+
                 // Send the request message
                 byte[] buffer = message.getBytes();
                 DatagramPacket packet = new DatagramPacket(buffer, buffer.length, address, serverPort);
@@ -78,6 +85,8 @@ public class BootstrapClient {
                 String response = new String(recvPacket.getData(), 0, recvPacket.getLength());
                 System.out.println("Response from server: " + response);
                 System.out.println("Latency: " + (endTime - startTime) + " ms");
+                System.out.println("================================");
+                System.out.println(" ");
 
                 // Log details to file
                 logWriter.printf("Request: %s%n", requestMessage);
@@ -90,7 +99,7 @@ public class BootstrapClient {
                 hopCounter++;
             }
         } catch (Exception e) {
-            e.printStackTrace();
+            System.out.println(e);
         } finally {
             scanner.close();
         }
