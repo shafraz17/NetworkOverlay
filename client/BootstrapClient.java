@@ -62,8 +62,8 @@ public class BootstrapClient {
                         ip = scanner.nextLine();
                         System.out.println("Enter the port of the node:");
                         port = Integer.parseInt(scanner.nextLine());
-//                        scanner.close();
-//                        downloadFile(ip, port);
+                        scanner.close();
+                        downloadFile(ip, port);
                     default:
                         System.out.println("Invalid command!");
                         continue;
@@ -106,41 +106,40 @@ public class BootstrapClient {
                 hopCounter++;
             }
         } catch (Exception e) {
-            System.out.println(e);
+            e.printStackTrace();
         } finally {
             scanner.close();
         }
     }
 
-//    private static void downloadFile(String ip, Integer port) {
-//        try {
-//            int size = new Random().nextInt(7) + 3; // Generate a size between 2 and 10 MB
-//            String url = STR."http://\{ip}:\{port + 1}/file?size=\{size}";
-////            String url = STR."http://localhost:\{port + 1}/file?size=\{size}";
-//
-//            URL obj = URI.create(url).toURL();
-//            HttpURLConnection con = (HttpURLConnection) obj.openConnection();
-//            con.setRequestMethod("GET");
-//
-//            int responseCode = con.getResponseCode();
-//
-//            if (responseCode == HttpURLConnection.HTTP_OK) { // success
-//                BufferedReader in = new BufferedReader(new InputStreamReader(con.getInputStream()));
-//                String inputLine;
-//                StringBuilder response = new StringBuilder();
-//
-//                while ((inputLine = in.readLine()) != null) {
-//                    response.append(inputLine).append("\n");
-//                }
-//                in.close();
-//
-//                System.out.println(STR."File size: \{size}MB");
-//                System.out.println(STR."Response: \{response.toString()}");
-//            } else {
-//                System.out.println("GET request not worked");
-//            }
-//        } catch (Exception e) {
-//            e.printStackTrace();
-//        }
-//    }
+    private static void downloadFile(String ip, Integer port) {
+        try {
+            int size = new Random().nextInt(7) + 3; // Generate a size between 2 and 10 MB
+            String url = "http:" + ip + ":" + port + 1 + "file?size=" + size;
+
+            URL obj = URI.create(url).toURL();
+            HttpURLConnection con = (HttpURLConnection) obj.openConnection();
+            con.setRequestMethod("GET");
+
+            int responseCode = con.getResponseCode();
+
+            if (responseCode == HttpURLConnection.HTTP_OK) { // success
+                BufferedReader in = new BufferedReader(new InputStreamReader(con.getInputStream()));
+                String inputLine;
+                StringBuilder response = new StringBuilder();
+
+                while ((inputLine = in.readLine()) != null) {
+                    response.append(inputLine).append("\n");
+                }
+                in.close();
+
+                System.out.printf("File size: " + size);
+                System.out.println("Response:" + response.toString());
+            } else {
+                System.out.println("GET request not worked");
+            }
+        } catch (Exception e) {
+            e.printStackTrace();
+        }
+    }
 }
