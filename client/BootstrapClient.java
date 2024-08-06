@@ -19,7 +19,7 @@ public class BootstrapClient {
              FileWriter fileWriter = new FileWriter(LOG_FILE, true); // Append mode
              PrintWriter logWriter = new PrintWriter(fileWriter)) {
 
-            InetAddress address = InetAddress.getByName("localhost");
+            InetAddress address = InetAddress.getByName("23.94.83.39");
             int serverPort = 55555;
 
             while (true) {

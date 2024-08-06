@@ -1,5 +1,17 @@
+import com.sun.net.httpserver.HttpExchange;
+import com.sun.net.httpserver.HttpHandler;
+import com.sun.net.httpserver.HttpServer;
+
+import java.io.FileWriter;
+import java.io.IOException;
+import java.io.OutputStream;
+import java.io.PrintWriter;
 import java.net.DatagramPacket;
 import java.net.DatagramSocket;
+import java.net.InetAddress;
+import java.net.InetSocketAddress;
+import java.security.MessageDigest;
+import java.security.NoSuchAlgorithmException;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Random;
@@ -14,6 +26,9 @@ import java.security.NoSuchAlgorithmException;
 import com.sun.net.httpserver.HttpServer;
 import com.sun.net.httpserver.HttpHandler;
 import com.sun.net.httpserver.HttpExchange;
+import java.util.Date;
+import java.util.HashMap;
+import java.util.Map;
 
 class Neighbour{
     private String ip;
@@ -98,14 +113,17 @@ class Neighbour{
 
 public class BootstrapServer {   
 
-    public static void main(String args[])
-    {
+    private static final String LOG_FILE = "server_log.txt"; // Path to log file
+    private static Map<String, Integer> messageCounts = new HashMap<>(); // Track message counts per client
+
+    public static void main(String[] args) {
         DatagramSocket sock = null;
         String s;
         List<Neighbour> nodes = new ArrayList<Neighbour>();
 
-        try
-        {
+        try (FileWriter fileWriter = new FileWriter(LOG_FILE, true); // Append mode
+             PrintWriter logWriter = new PrintWriter(fileWriter)) {
+
             sock = new DatagramSocket(55555);
 
             echo("Bootstrap Server created at 55555. Waiting for incoming data...");
@@ -121,14 +139,22 @@ public class BootstrapServer {
 
                 //echo the details of incoming data - client ip : client port - client message
                 echo(incoming.getAddress().getHostAddress() + " : " + incoming.getPort() + " - " + s);
+                // Track message counts
+                String clientKey = incoming.getAddress().getHostAddress() + ":" + incoming.getPort();
+                messageCounts.put(clientKey, messageCounts.getOrDefault(clientKey, 0) + 1);
+
+                // Measure latency
+                long startTime = new Date().getTime();
 
                 StringTokenizer st = new StringTokenizer(s, " ");
 
                 String length = st.nextToken();
                 String command = st.nextToken();
+                String reply = "";
+                long endTime = 0;
 
                 if (command.equals("REG")) {
-                    String reply = "REGOK ";
+                    reply = "REGOK ";
 
                     String ip = st.nextToken();
                     int port = Integer.parseInt(st.nextToken());
@@ -177,23 +203,39 @@ public class BootstrapServer {
                     String ip = st.nextToken();
                     int port = Integer.parseInt(st.nextToken());
                     String username = st.nextToken();
+                    boolean found = false;
                     for (int i=0; i<nodes.size(); i++) {
                         if (nodes.get(i).getPort() == port) {
                             nodes.remove(i);
-                            String reply = "0012 UNROK 0";
+                            reply = "0012 UNROK 0";
                             DatagramPacket dpReply = new DatagramPacket(reply.getBytes() , reply.getBytes().length , incoming.getAddress() , incoming.getPort());
                             sock.send(dpReply);
+                            found = true;
+                            break;
                         }
                     }
+                    if (!found) {
+                        reply = "0012 UNROK 1"; // Registration not found
+                    }
+
                 } else if (command.equals("ECHO")) {
                     for (int i=0; i<nodes.size(); i++) {
                         echo(nodes.get(i).getIp() + " " + nodes.get(i).getPort() + " " + nodes.get(i).getUsername());
                     }
-                    String reply = "0012 ECHOK 0";
+                     reply = "0012 ECHOK 0";
                     DatagramPacket dpReply = new DatagramPacket(reply.getBytes() , reply.getBytes().length , incoming.getAddress() , incoming.getPort());
                     sock.send(dpReply);
+                    endTime = new Date().getTime();
                 }
+                long latency = endTime - startTime;
 
+                // Log details to file
+                logWriter.printf("Client IP: %s, Port: %d%n", incoming.getAddress().getHostAddress(), incoming.getPort());
+                logWriter.printf("Received: %s%n", s);
+                logWriter.printf("Response: %s%n", reply);
+                logWriter.printf("Latency: %d ms%n", latency);
+                logWriter.printf("Number of Hops: %d%n", getHopsFromMessage(s));
+                logWriter.println("-------");
             }
         }
 
@@ -203,9 +245,20 @@ public class BootstrapServer {
         }
     }
 
-    //simple function to echo data to terminal
-    public static void echo(String msg)
-    {
+    // Extract hop count from the message
+    private static int getHopsFromMessage(String message) {
+        StringTokenizer st = new StringTokenizer(message, " ");
+        while (st.hasMoreTokens()) {
+            String token = st.nextToken();
+            if (token.matches("\\d+")) {
+                return Integer.parseInt(token);
+            }
+        }
+        return 0;
+    }
+
+    // Simple function to echo data to terminal
+    public static void echo(String msg) {
         System.out.println(msg);
     }
 }
