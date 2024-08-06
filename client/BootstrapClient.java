@@ -10,7 +10,7 @@ public class BootstrapClient {
         Scanner scanner = new Scanner(System.in);
         try {
             DatagramSocket socket = new DatagramSocket();
-            InetAddress address = InetAddress.getByName("23.94.83.39"); // Change to server's address if needed
+            InetAddress address = InetAddress.getByName("localhost"); // Change to server's address if needed
             int serverPort = 55555;
 
             while (true) {
@@ -77,8 +77,7 @@ public class BootstrapClient {
     private static void downloadFile(String ip, Integer port) {
         try {
             int size = new Random().nextInt(7) + 3; // Generate a size between 2 and 10 MB
-            String url = STR."http://\{ip}:\{port + 1}/file?size=\{size}";
-//            String url = STR."http://localhost:\{port + 1}/file?size=\{size}";
+            String url = "http:" + ip + ":" + port + 1 + "file?size=" + size;
 
             URL obj = URI.create(url).toURL();
             HttpURLConnection con = (HttpURLConnection) obj.openConnection();
@@ -96,8 +95,8 @@ public class BootstrapClient {
                 }
                 in.close();
 
-                System.out.println(STR."File size: \{size}MB");
-                System.out.println(STR."Response: \{response.toString()}");
+                System.out.printf("File size: " + size);
+                System.out.println("Response:" + response.toString());
             } else {
                 System.out.println("GET request not worked");
             }
