@@ -5,9 +5,10 @@ import org.uom.tesla.model.payload.Search;
 import org.uom.tesla.utils.Constants;
 import org.uom.tesla.utils.service.NodeUDP;
 
+import java.io.IOException;
 import java.util.*;
 public class TestClient {
-    public static void main(String[] args) {
+    public static void main(String[] args) throws IOException {
         HashMap<String, String> paramMap = new HashMap<>();
 
         for (int i = 0; i < args.length; i = i + 2) {
@@ -18,7 +19,7 @@ public class TestClient {
         System.out.println();
 
         String bootstrapIp = paramMap.get("-b") != null ? paramMap.get("-b") : Constants.IP_BOOTSTRAP_SERVER;
-        String nodeIp = paramMap.get("-i") != null ? paramMap.get("-i") : Constants.IP_BOOTSTRAP_SERVER;
+        String nodeIp = paramMap.get("-i") != null ? paramMap.get("-i") : Constants.IP_NODE;
         int nodePort = paramMap.get("-p") != null ? Integer.parseInt(paramMap.get("-p")) : new Random().nextInt(Constants.MAX_PORT_NODE - Constants.MIN_PORT_NODE) + Constants.MIN_PORT_NODE;
         String nodeUsername = paramMap.get("-u") != null ? paramMap.get("-u") : UUID.randomUUID().toString();
 
@@ -35,6 +36,7 @@ public class TestClient {
 
         // Register in network
         nodeUDP.register();
+        nodeUDP.startHttpServer();
         while (true) {
             try {
                 Thread.sleep(1000);

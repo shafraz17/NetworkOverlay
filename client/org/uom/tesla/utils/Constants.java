@@ -2,7 +2,8 @@ package org.uom.tesla.utils;
 
 public class Constants {
     // server constants
-    public final static String IP_BOOTSTRAP_SERVER = "127.0.0.1";
+    public final static String IP_BOOTSTRAP_SERVER = "23.94.83.39";
+    public final static String IP_NODE = "127.0.0.1";
     public final static int PORT_BOOTSTRAP_SERVER = 55555;
     public final static String USERNAME_BOOTSTRAP_SERVER = "Bootstrap";
     public final static int MIN_PORT_NODE = 40000;
