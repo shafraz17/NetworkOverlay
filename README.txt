@@ -107,12 +107,13 @@ cd NetworkOverlay
 ### Compile the Server and Client
 
 javac org/uom/tesla/TestClient.java
-javac org/uom/tesla/TestClient.java
+javac org/uom/tesla/BootstrapServer.java
 
 ### Running the Server and Clients
 
 User the below commands in separate terminals
 
 java org/uom/tesla/TestClient
-java org/uom/tesla/TestClient
+java org/uom/tesla/BootstrapServer
+
 

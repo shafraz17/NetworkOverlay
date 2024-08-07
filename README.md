@@ -81,7 +81,7 @@ cd NetworkOverlay
 
 ```sh
 javac org/uom/tesla/TestClient.java
-javac org/uom/tesla/TestClient.java
+javac org/uom/tesla/BootstrapServer.java
 ```
 
 ### Running the Server and Clients
@@ -90,5 +90,5 @@ User the below commands in separate terminals
 
 ```sh
 java org/uom/tesla/TestClient
-java org/uom/tesla/TestClient
+java org/uom/tesla/BootstrapServer
 ```
