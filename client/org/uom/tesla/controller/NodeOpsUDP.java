@@ -18,6 +18,11 @@ import java.util.*;
 import java.util.regex.Pattern;
 import java.util.stream.Collectors;
 
+import java.net.*;
+import java.util.Random;
+import java.io.BufferedReader;
+import java.io.InputStreamReader;
+
 public class NodeOpsUDP implements NodeOps, Runnable {
 
     private Node node;
@@ -305,6 +310,9 @@ public class NodeOpsUDP implements NodeOps, Runnable {
         if (!searchResult.isEmpty()) {
             System.out.println("File is available at " + node.getCredential().getIp() + " : " + node.getCredential().getPort());
             SearchResponse searchResponse = new SearchResponse(searchRequest.getSequenceNo(), searchResult.size(), searchRequest.getCredential(), searchRequest.getHops(), searchResult);
+
+            downloadFile(node.getCredential().getIp(), node.getCredential().getPort() + 1);
+
             if (searchRequest.getCredential().getIp() == node.getCredential().getIp() && searchRequest.getCredential().getPort() == node.getCredential().getPort()) {
                 System.out.println(searchResponse.toString());
             } else {
@@ -319,6 +327,38 @@ public class NodeOpsUDP implements NodeOps, Runnable {
                 search(searchRequest, credential);
                 System.out.println("Send SER request message to " + credential.getIp() + " : " + credential.getPort());
             }
+        }
+    }
+
+    private static void downloadFile(String ip, Integer port) {
+        try {
+            int size = new Random().nextInt(7) + 3; // Generate a size between 2 and 10 MB
+            String url = "http:" + ip + ":" + port + "/file?size=" + size;
+//            String url = "http:" + "localhost" + ":" + port + "/file?size=" + size;
+
+            URL obj = URI.create(url).toURL();
+            HttpURLConnection con = (HttpURLConnection) obj.openConnection(Proxy.NO_PROXY);
+            con.setRequestMethod("GET");
+
+            int responseCode = con.getResponseCode();
+
+            if (responseCode == HttpURLConnection.HTTP_OK) { // success
+                BufferedReader in = new BufferedReader(new InputStreamReader(con.getInputStream()));
+                String inputLine;
+                StringBuilder response = new StringBuilder();
+
+                while ((inputLine = in.readLine()) != null) {
+                    response.append(inputLine).append("\n");
+                }
+                in.close();
+
+                System.out.printf("File size: " + size);
+                System.out.println("Response:" + response.toString());
+            } else {
+                System.out.println("GET request not worked");
+            }
+        } catch (Exception e) {
+            e.printStackTrace();
         }
     }
 }
