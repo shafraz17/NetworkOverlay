@@ -13,12 +13,19 @@ cd NetworkOverlay
 
 ## Requirements
 
-- Java Development Kit (JDK) 8 or higher
+- Java Development Kit (JDK) 11
 
 ## Initializing the Overlay Network
 
-> Points 4-7 are automated with scripts - `run-client.(sh/bat)` & `run-server.(sh/bat)`. Choose the appropriate script based on your system.
-> Execute the appropriate script based on your role within the network. (Server - `run-server`/Workers - `run-client`).
+> Starting up server & client nodes are automated with shell & batch scripts for both OS platforms. Following table summarizes the usage of each script. Use as necessary.
+
+| Script | Usage | Usage Notes |
+| ------ | ----- | ----------- |
+|`clean-run-server.(sh/bat)`|Initialize the server|Build & run a fresh docker container for the server. Should be executed once for the bootstrap server application.|
+|`clean-run-client.(sh/bat)`|Initialize the worker node for the first time as a client|Build & run a fresh docker container for a worker node. Should be executed once for a single host which runs bootstrap client application.|
+|`run-client.(sh/bat)`|Start up another worker node in an already initialized host|Build & run docker container from exsiting image for a worker node. Can be executed multiple times in a docker host to spin up multiple worker nodes inside the same host machine.|
+
+> Execute the appropriate script based on your role within the network. (Server - `clean-run-server.*`/Workers - `*-run-client.*`).
 
 1. Initialize a Docker Overlay network. The VPS server as the Swarm Manager Node.
     1. `docker swarm init`.
@@ -27,23 +34,13 @@ cd NetworkOverlay
     1. `docker network create --driver overlay --attachable node-network`.
 4. Build the `BootstrapServer` docker image in the VPS Server.
 
-    1. ```bash
-        cd server
-        docker build -t bootstrap-server
-       ```
+    1. This is automated via the script: `clean-run-server.sh`/`clean-run-server.bat`.
 
-5. Run the docker image for the Bootstrap Server in the Swarm Manager attaching the container to the `node-network` created above.
-    1. `docker run -d -p 55555:55555 --network node-network bootstrap-server`.
-6. Build the `BootstrapClient` docker image in each worker node.
+5. Start up client application in each worker node.
 
-    1. ```bash
-        cd client
-        docker build -t bootstrap-client
-       ```
+    1. This is automated via the script: `clean-run-client.sh`/`clean-run-client.bat` OR `run-client.sh`/`run-client.bat`.
 
-7. Run the client containers from within the worker nodes attaching to the `node-network` as well.
-    1. `docker run -it --network node-network bootstrap-client`.
-8. Proceed with the command executions from within each worker node as required.
+6. Proceed with the command executions from within each worker node as required.
 
 ## Client Commands
 

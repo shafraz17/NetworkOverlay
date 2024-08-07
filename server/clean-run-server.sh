@@ -8,20 +8,33 @@ CONTAINER_NAME="bootstrap-server"
 PORT=55555
 NETWORK="node-network"
 
-# Build the Docker image
-echo "Building Docker image..."
-docker build -t $IMAGE_NAME .
-if [ $? -ne 0 ]; then
-    echo "Error: Docker build failed."
-    exit 1
-fi
-
 # Check if a container with the same name is already running
 echo "Checking for existing containers..."
 if [ $(docker container ls -a --filter name=$CONTAINER_NAME) ]; then
     echo "Stopping existing container..."
     docker stop $CONTAINER_NAME
     docker rm $CONTAINER_NAME
+fi
+
+# Remove existing image if it exists
+echo "Checking for existing image..."
+if docker image inspect "$IMAGE_NAME" &>/dev/null; then
+    echo "Removing existing image: $IMAGE_NAME"
+    docker rmi -f "$IMAGE_NAME"
+    if [ $? -ne 0 ]; then
+        echo "Error: Failed to remove existing image."
+        exit 1
+    fi
+else
+    echo "No existing image found. Proceeding with build."
+fi
+
+# Build the Docker image
+echo "Building Docker image..."
+docker build -t $IMAGE_NAME .
+if [ $? -ne 0 ]; then
+    echo "Error: Docker build failed."
+    exit 1
 fi
 
 # Run the Docker container

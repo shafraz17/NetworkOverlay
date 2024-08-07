@@ -1,27 +1,17 @@
 #!/bin/bash
+# Start up another client container in the host
+echo "Starting Client Container..."
 
-echo "Starting Docker build and run process..."
+# Function to generate a random hash
+generate_hash() {
+    cat /dev/urandom | tr -dc 'a-zA-Z0-9' | fold -w 8 | head -n 1
+}
 
 # Set variables
 IMAGE_NAME="bootstrap-client"
-CONTAINER_NAME="bootstrap-client"
 NETWORK="node-network"
 
-# Build the Docker image
-echo "Building Docker image..."
-docker build -t $IMAGE_NAME .
-if [ $? -ne 0 ]; then
-    echo "Error: Docker build failed."
-    exit 1
-fi
-
-# Check if a container with the same name is already running
-echo "Checking for existing containers..."
-if [ $(docker container ls -a --filter name=$CONTAINER_NAME) ]; then
-    echo "Stopping existing container..."
-    docker stop $CONTAINER_NAME
-    docker rm $CONTAINER_NAME
-fi
+CONTAINER_NAME="bootstrap-client-$(generate_hash)"
 
 # Run the Docker container
 echo "Running Docker container..."
@@ -36,4 +26,3 @@ echo "Container name: $CONTAINER_NAME"
 echo "Run below commands in a seperate terminal window for debugging"
 echo "To stop the container, run: docker stop $CONTAINER_NAME"
 echo "To view container logs, run: docker logs $CONTAINER_NAME"
-

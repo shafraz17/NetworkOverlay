@@ -1,27 +1,20 @@
+@REM Start up another client container in the host
+
 @echo off
-echo Starting Docker build and run process...
+echo Starting Client Container...
 
 REM Set variables
 set IMAGE_NAME=bootstrap-client
-set CONTAINER_NAME=bootstrap-client
 set NETWORK=node-network
 
-REM Build the Docker image
-echo Building Docker image...
-docker build -t %IMAGE_NAME% .
-if %ERRORLEVEL% neq 0 (
-    echo Error: Docker build failed.
-    exit /b %ERRORLEVEL%
-)
+@REM Generate a random hash as the container name suffix
+SET SUFFIX=%random%%random%%random%%random%%random%%random%
+SET SUFFIX=%SUFFIX:0=a%
+SET SUFFIX=%SUFFIX:1=b%
+SET SUFFIX=%SUFFIX:2=c%
 
-REM Check if a container with the same name is already running
-echo Checking for existing containers...
-docker container ls -a --filter name=%CONTAINER_NAME%
-if %ERRORLEVEL% equ 0 (
-    echo Stopping existing container...
-    docker stop %CONTAINER_NAME%
-    docker rm %CONTAINER_NAME%
-)
+@REM Unique container name
+set CONTAINER_NAME=bootstrap-client-%SUFFIX%
 
 REM Run the Docker container
 echo Running Docker container...
