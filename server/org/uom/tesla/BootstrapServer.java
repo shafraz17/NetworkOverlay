@@ -106,6 +106,7 @@ public class BootstrapServer {
             }
         } catch (IOException e) {
             System.err.println("IOException " + e);
+            e.printStackTrace();
         }
     }
 
