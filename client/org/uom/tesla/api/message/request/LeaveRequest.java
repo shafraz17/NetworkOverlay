@@ -6,6 +6,17 @@ import org.uom.tesla.api.message.Message;
 public class LeaveRequest extends Message {
 
     private Credential credential;
+    private int sequenceNumber;
+
+
+
+    public int getSequenceNumber() {
+        return sequenceNumber;
+    }
+
+    public void setSequenceNumber(int sequenceNumber) {
+        this.sequenceNumber = sequenceNumber;
+    }
 
     public LeaveRequest(Credential credential) {
         this.credential = credential;

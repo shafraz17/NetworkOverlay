@@ -6,12 +6,17 @@ import org.uom.tesla.api.message.Message;
 import org.uom.tesla.api.message.request.*;
 import org.uom.tesla.api.message.response.*;
 
-import java.util.ArrayList;
-import java.util.List;
+import java.util.*;
+import java.io.BufferedWriter;
+import java.io.FileWriter;
+import java.io.IOException;
+import java.util.*;
 import java.util.StringTokenizer;
-
 public class Parser {
 
+    // Map to keep track of request timestamps for latency calculation
+    private static final Map<Integer, Long> requestTimestamps = new HashMap<>();
+    private static final String LOG_FILE_PATH = "latency_log.txt";
     public static Message parse(String message, Credential senderCredential) {
 
         System.out.println("Message received : " + message);
@@ -95,7 +100,10 @@ public class Parser {
                 }
             }
             Credential endNodeCredentials = new Credential(ip, port, null);
-            return new SearchResponse(sequenceNo, numOfFiles, endNodeCredentials, hops, fileList);
+            SearchResponse searchResponse = new SearchResponse(sequenceNo, numOfFiles, endNodeCredentials, hops, fileList);
+            System.out.println("latency called");
+            logResponseLatency(searchResponse);
+            return searchResponse;
 
         } else if (command.equals(Constant.Command.ERROR)) {
             return new ErrorResponse();
@@ -103,4 +111,40 @@ public class Parser {
 
         return null;
     }
+
+    // Log response latency based on the request timestamp
+    private static void logResponseLatency(Message response) {
+        if (response instanceof ResponseWithSeqNum) {
+            ResponseWithSeqNum responseWithSeqNum = (ResponseWithSeqNum) response;
+            int sequenceNumber = responseWithSeqNum.getSequenceNumber();
+            Long requestTime = requestTimestamps.remove(sequenceNumber);
+            if (requestTime != null) {
+                long latency = System.currentTimeMillis() - requestTime;
+                String logMessage = "Latency for request " + sequenceNumber + ": " + latency + " ms";
+                // Log to console
+                System.out.println(logMessage);
+                // Log to file
+                writeLogToFile(logMessage);
+            }
+        }
+    }
+
+    // Track request timestamps
+    public static void trackRequestTimestamp(int sequenceNumber) {
+        requestTimestamps.put(sequenceNumber, System.currentTimeMillis());
+    }
+
+    // Write log message to a file
+    private static void writeLogToFile(String logMessage) {
+        try (BufferedWriter writer = new BufferedWriter(new FileWriter(LOG_FILE_PATH, true))) {
+            writer.write(logMessage);
+            writer.newLine();
+        } catch (IOException e) {
+            e.printStackTrace();
+        }
+    }
+}
+
+ interface ResponseWithSeqNum {
+    int getSequenceNumber();
 }

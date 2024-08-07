@@ -9,12 +9,30 @@ public class SearchRequest extends Message {
     private Credential triggeredCredential;
     private String fileName;
     private int hops;
+    private int sequenceNumber;
+
 
     public SearchRequest(int sequenceNo, Credential triggeredCredential, String fileName, int hops) {
         this.sequenceNo = sequenceNo;
         this.triggeredCredential = triggeredCredential;
         this.fileName = fileName;
         this.hops = hops;
+    }
+
+    public Credential getTriggeredCredential() {
+        return triggeredCredential;
+    }
+
+    public void setTriggeredCredential(Credential triggeredCredential) {
+        this.triggeredCredential = triggeredCredential;
+    }
+
+    public int getSequenceNumber() {
+        return sequenceNumber;
+    }
+
+    public void setSequenceNumber(int sequenceNumber) {
+        this.sequenceNumber = sequenceNumber;
     }
 
     public Credential getCredential() {

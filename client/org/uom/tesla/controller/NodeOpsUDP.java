@@ -9,12 +9,16 @@ import org.uom.tesla.api.message.request.*;
 import org.uom.tesla.api.message.response.*;
 import org.uom.tesla.feature.Parser;
 
+import java.io.BufferedWriter;
+import java.io.FileWriter;
 import java.io.IOException;
 import java.net.DatagramPacket;
 import java.net.DatagramSocket;
 import java.net.InetAddress;
 import java.net.SocketException;
 import java.util.*;
+import java.util.concurrent.ConcurrentHashMap;
+import java.util.concurrent.ConcurrentMap;
 import java.util.regex.Pattern;
 import java.util.stream.Collectors;
 
@@ -25,6 +29,8 @@ public class NodeOpsUDP implements NodeOps, Runnable {
     private DatagramSocket socket;
     private boolean regOk = false;
 
+    private ConcurrentMap<Integer, Long> requestTimestamps = new ConcurrentHashMap<>();
+    private static final String LOG_FILE = "latency_log.txt";
     public NodeOpsUDP(Credential bootstrapServerCredential, Credential nodeCredential) {
         this.bootstrapServerCredential = bootstrapServerCredential;
 
@@ -74,6 +80,8 @@ public class NodeOpsUDP implements NodeOps, Runnable {
     @Override
     public void register() {
         RegisterRequest registerRequest = new RegisterRequest(node.getCredential());
+        int sequenceNumber = registerRequest.getSequenceNumber();
+        requestTimestamps.put(sequenceNumber, System.currentTimeMillis());
         String msg = registerRequest.getMessageAsString(Constant.Command.REG);
         try {
             socket.send(new DatagramPacket(msg.getBytes(), msg.getBytes().length, InetAddress.getByName(bootstrapServerCredential.getIp()), bootstrapServerCredential.getPort()));
@@ -86,6 +94,8 @@ public class NodeOpsUDP implements NodeOps, Runnable {
     public void unRegister() {
         UnregisterRequest unregisterRequest = new UnregisterRequest(node.getCredential());
         String msg = unregisterRequest.getMessageAsString(Constant.Command.UNREG);
+        int sequenceNumber = unregisterRequest.getSequenceNumber();
+        requestTimestamps.put(sequenceNumber, System.currentTimeMillis());        requestTimestamps.put(sequenceNumber, System.currentTimeMillis());
         try {
             socket.send(new DatagramPacket(msg.getBytes(), msg.getBytes().length, InetAddress.getByName(bootstrapServerCredential.getIp()), bootstrapServerCredential.getPort()));
         } catch (IOException e) {
@@ -97,6 +107,8 @@ public class NodeOpsUDP implements NodeOps, Runnable {
     public void join(Credential neighbourCredential) {
         JoinRequest joinRequest = new JoinRequest(node.getCredential());
         String msg = joinRequest.getMessageAsString(Constant.Command.JOIN);
+        int sequenceNumber = joinRequest.getSequenceNumber();  // Ensure this method exists or use an appropriate identifier
+        requestTimestamps.put(sequenceNumber, System.currentTimeMillis());
         try {
             socket.send(new DatagramPacket(msg.getBytes(), msg.getBytes().length, InetAddress.getByName(neighbourCredential.getIp()), neighbourCredential.getPort()));
         } catch (IOException e) {
@@ -119,6 +131,8 @@ public class NodeOpsUDP implements NodeOps, Runnable {
     public void leave(Credential neighbourCredential) {
         LeaveRequest leaveRequest = new LeaveRequest(node.getCredential());
         String msg = leaveRequest.getMessageAsString(Constant.Command.LEAVE);
+        int sequenceNumber = leaveRequest.getSequenceNumber();
+        requestTimestamps.put(sequenceNumber, System.currentTimeMillis());
         try {
             socket.send(new DatagramPacket(msg.getBytes(), msg.getBytes().length, InetAddress.getByName(neighbourCredential.getIp()), neighbourCredential.getPort()));
         } catch (IOException e) {
@@ -140,6 +154,8 @@ public class NodeOpsUDP implements NodeOps, Runnable {
     @Override
     public void search(SearchRequest searchRequest, Credential sendCredentials) {
         String msg = searchRequest.getMessageAsString(Constant.Command.SEARCH);
+        int sequenceNumber = searchRequest.getSequenceNumber();  // Ensure this method exists or use an appropriate identifier
+        requestTimestamps.put(sequenceNumber, System.currentTimeMillis());
         try {
             socket.send(new DatagramPacket(msg.getBytes(), msg.getBytes().length, InetAddress.getByName(sendCredentials.getIp()), sendCredentials.getPort()));
         } catch (IOException e) {
@@ -296,6 +312,14 @@ public class NodeOpsUDP implements NodeOps, Runnable {
             System.out.println(credential.getIp() + "\t" + credential.getPort());
         }
         System.out.println("--------------------------------------------------------");
+    }
+    private void writeLogToFile(String logMessage) {
+        try (BufferedWriter writer = new BufferedWriter(new FileWriter(LOG_FILE, true))) {
+            writer.write(logMessage);
+            writer.newLine();
+        } catch (IOException e) {
+            e.printStackTrace();
+        }
     }
 
     @Override
