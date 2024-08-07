@@ -1,5 +1,8 @@
 package org.uom.tesla.utils.service;
 
+import com.sun.net.httpserver.HttpExchange;
+import com.sun.net.httpserver.HttpHandler;
+import com.sun.net.httpserver.HttpServer;
 import org.uom.tesla.model.payload.*;
 import org.uom.tesla.model.response.*;
 import org.uom.tesla.model.Error;
@@ -13,10 +16,13 @@ import org.uom.tesla.model.Message;
 import org.uom.tesla.utils.Constants;
 
 import java.io.IOException;
+import java.io.OutputStream;
 import java.net.DatagramPacket;
 import java.net.DatagramSocket;
 import java.net.InetAddress;
 import java.net.SocketException;
+import java.security.MessageDigest;
+import java.security.NoSuchAlgorithmException;
 import java.util.*;
 import java.util.regex.Pattern;
 import java.util.stream.Collectors;
@@ -32,6 +38,7 @@ public class NodeUDP implements org.uom.tesla.utils.NodeUDP, Runnable {
     private final NodeMeta bootstrapServerNodeMeta;
     private DatagramSocket socket;
     private boolean regOk = false;
+    private HttpServer httpServer;
 
     public NodeUDP(NodeMeta bootstrapServerNodeMeta, NodeMeta nodeNodeMeta) {
         this.bootstrapServerNodeMeta = bootstrapServerNodeMeta;
@@ -313,6 +320,61 @@ public class NodeUDP implements org.uom.tesla.utils.NodeUDP, Runnable {
             for (NodeMeta nodeMeta : node.getRoutingTable()) {
                 search(search, nodeMeta);
                 System.out.println("Send SER request message to " + nodeMeta.getIp() + " : " + nodeMeta.getPort());
+            }
+        }
+    }
+
+    public void startHttpServer() throws IOException {
+        httpServer = HttpServer.create(new InetSocketAddress(node.getCredential().getPort() + 1), 0);
+        httpServer.createContext("/file", new FileHandler());
+        httpServer.setExecutor(null); // creates a default executor
+        httpServer.start();
+        System.out.println("HTTP server started at port " + (node.getCredential().getPort() + 1));
+    }
+
+    static class FileHandler implements HttpHandler {
+        @Override
+        public void handle(HttpExchange exchange) throws IOException {
+            String query = exchange.getRequestURI().getQuery();
+            if (query == null || !query.startsWith("size=")) {
+                exchange.sendResponseHeaders(400, -1);
+                return;
+            }
+
+            int size;
+            try {
+                size = Integer.parseInt(query.split("=")[1]);
+                if (size < 2 || size > 10) {
+                    throw new IllegalArgumentException();
+                }
+            } catch (Exception e) {
+                exchange.sendResponseHeaders(400, -1);
+                return;
+            }
+
+            byte[] data = new byte[size * 1024 * 1024]; // Size in bytes
+            new Random().nextBytes(data);
+
+            String hash = calculateSHA256(data);
+            String response = "File size: " + size + "MB\nSHA-256 Hash: " + hash;
+
+            exchange.sendResponseHeaders(200, response.length());
+            OutputStream os = exchange.getResponseBody();
+            os.write(response.getBytes());
+            os.close();
+        }
+
+        private String calculateSHA256(byte[] data) {
+            try {
+                MessageDigest digest = MessageDigest.getInstance("SHA-256");
+                byte[] hashBytes = digest.digest(data);
+                StringBuilder sb = new StringBuilder();
+                for (byte b : hashBytes) {
+                    sb.append(String.format("%02x", b));
+                }
+                return sb.toString();
+            } catch (NoSuchAlgorithmException e) {
+                throw new RuntimeException(e);
             }
         }
     }
