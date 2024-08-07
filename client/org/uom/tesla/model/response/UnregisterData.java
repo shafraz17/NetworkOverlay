@@ -1,21 +1,17 @@
-package org.uom.tesla.api.message.response;
+package org.uom.tesla.model.response;
 
-import org.uom.tesla.api.message.Message;
+import org.uom.tesla.model.Message;
 
-public class LeaveResponse extends Message {
+public class UnregisterData extends Message {
 
-    private int value;
+    private final int value;
 
-    public LeaveResponse(int value) {
+    public UnregisterData(int value) {
         this.value = value;
     }
 
     public int getValue() {
         return value;
-    }
-
-    public void setValue(int value) {
-        this.value = value;
     }
 
     @Override

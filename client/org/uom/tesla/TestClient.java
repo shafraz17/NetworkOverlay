@@ -1,14 +1,13 @@
-package org.uom.tesla.controller;
+package org.uom.tesla;
 
-import org.uom.tesla.api.Constant;
-import org.uom.tesla.api.Credential;
-import org.uom.tesla.api.message.request.SearchRequest;
+import org.uom.tesla.model.NodeMeta;
+import org.uom.tesla.model.payload.Search;
+import org.uom.tesla.utils.Constants;
+import org.uom.tesla.utils.service.NodeUDP;
 
 import java.util.*;
-public class BootstrapNode {
-
+public class TestClient {
     public static void main(String[] args) {
-
         HashMap<String, String> paramMap = new HashMap<>();
 
         for (int i = 0; i < args.length; i = i + 2) {
@@ -18,35 +17,35 @@ public class BootstrapNode {
 
         System.out.println();
 
-        String bootstrapIp = paramMap.get("-b") != null ? paramMap.get("-b") : Constant.IP_BOOTSTRAP_SERVER;
-        String nodeIp = paramMap.get("-i") != null ? paramMap.get("-i") : Constant.IP_BOOTSTRAP_SERVER;
-        int nodePort = paramMap.get("-p") != null ? Integer.parseInt(paramMap.get("-p")) : new Random().nextInt(Constant.MAX_PORT_NODE - Constant.MIN_PORT_NODE) + Constant.MIN_PORT_NODE;
+        String bootstrapIp = paramMap.get("-b") != null ? paramMap.get("-b") : Constants.IP_BOOTSTRAP_SERVER;
+        String nodeIp = paramMap.get("-i") != null ? paramMap.get("-i") : Constants.IP_BOOTSTRAP_SERVER;
+        int nodePort = paramMap.get("-p") != null ? Integer.parseInt(paramMap.get("-p")) : new Random().nextInt(Constants.MAX_PORT_NODE - Constants.MIN_PORT_NODE) + Constants.MIN_PORT_NODE;
         String nodeUsername = paramMap.get("-u") != null ? paramMap.get("-u") : UUID.randomUUID().toString();
 
-        Credential bootstrapServerCredential = new Credential(bootstrapIp, Constant.PORT_BOOTSTRAP_SERVER, Constant.USERNAME_BOOTSTRAP_SERVER);
+        NodeMeta bootstrapServerNodeMeta = new NodeMeta(bootstrapIp, Constants.PORT_BOOTSTRAP_SERVER, Constants.USERNAME_BOOTSTRAP_SERVER);
         Map<Integer, String> searchQueryTable = new HashMap<>();
         List<String> searchQueries = Arrays.asList("Twilight", "Jack", "American_Idol", "Happy_Feet", "Twilight_saga", "Happy_Feet", "Feet");
         Collections.shuffle(searchQueries);
 
         // Generate self credentials
-        Credential nodeCredential = new Credential(nodeIp, nodePort, nodeUsername);
+        NodeMeta nodeNodeMeta = new NodeMeta(nodeIp, nodePort, nodeUsername);
 
         // Initiate the thread for UDP connection
-        NodeOpsUDP nodeOpsUDP = new NodeOpsUDP(bootstrapServerCredential, nodeCredential);
+        NodeUDP nodeUDP = new NodeUDP(bootstrapServerNodeMeta, nodeNodeMeta);
 
         // Register in network
-        nodeOpsUDP.register();
+        nodeUDP.register();
         while (true) {
             try {
                 Thread.sleep(1000);
             } catch (InterruptedException e) {
                 e.printStackTrace();
             }
-            if (nodeOpsUDP.isRegOk()) {
+            if (nodeUDP.isRegOk()) {
                 for (int i = 0; i < searchQueries.size(); i++) {
                     searchQueryTable.put(i, searchQueries.get(i));
-                    SearchRequest searchRequest = new SearchRequest(1, nodeOpsUDP.getNode().getCredential(), searchQueryTable.get(i), 0);
-                    nodeOpsUDP.triggerSearchRequest(searchRequest);
+                    Search search = new Search(1, nodeUDP.getNode().getCredential(), searchQueryTable.get(i), 0);
+                    nodeUDP.triggerSearchRequest(search);
                     try {
                         Thread.sleep(5000);
                     } catch (InterruptedException e) {

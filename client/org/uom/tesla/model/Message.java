@@ -1,4 +1,4 @@
-package org.uom.tesla.api.message;
+package org.uom.tesla.model;
 
 public abstract class Message {
     public String getMessageAsString(String message) {

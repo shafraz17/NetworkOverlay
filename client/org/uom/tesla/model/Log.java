@@ -1,13 +1,13 @@
-package org.uom.tesla.api;
+package org.uom.tesla.model;
 
 import java.util.Date;
 
-public class StatRecord {
+public class Log {
     private String searchQuery;
     private Date triggeredTime;
     private Date deliveryTime;
     private int hopsRequired;
-    private Credential servedNode;
+    private NodeMeta servedNode;
 
     public String getSearchQuery() {
         return searchQuery;
@@ -41,11 +41,11 @@ public class StatRecord {
         this.hopsRequired = hopsRequired;
     }
 
-    public Credential getServedNode() {
+    public NodeMeta getServedNode() {
         return servedNode;
     }
 
-    public void setServedNode(Credential servedNode) {
+    public void setServedNode(NodeMeta servedNode) {
         this.servedNode = servedNode;
     }
 }
