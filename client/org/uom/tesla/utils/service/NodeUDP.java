@@ -1,13 +1,16 @@
-package org.uom.tesla.controller;
+package org.uom.tesla.utils.service;
 
-import org.uom.tesla.api.Constant;
-import org.uom.tesla.api.Credential;
-import org.uom.tesla.api.Node;
-import org.uom.tesla.api.NodeOps;
-import org.uom.tesla.api.message.Message;
-import org.uom.tesla.api.message.request.*;
-import org.uom.tesla.api.message.response.*;
-import org.uom.tesla.feature.Parser;
+import org.uom.tesla.model.payload.*;
+import org.uom.tesla.model.response.*;
+import org.uom.tesla.model.Error;
+import org.uom.tesla.model.response.JoinData;
+import org.uom.tesla.model.response.LeaveData;
+import org.uom.tesla.model.response.RegisterData;
+import org.uom.tesla.utils.CommandParser;
+import org.uom.tesla.model.NodeMeta;
+import org.uom.tesla.model.Node;
+import org.uom.tesla.model.Message;
+import org.uom.tesla.utils.Constants;
 
 import java.io.IOException;
 import java.net.DatagramPacket;
@@ -23,21 +26,21 @@ import java.util.Random;
 import java.io.BufferedReader;
 import java.io.InputStreamReader;
 
-public class NodeOpsUDP implements NodeOps, Runnable {
+public class NodeUDP implements org.uom.tesla.utils.NodeUDP, Runnable {
 
-    private Node node;
-    private Credential bootstrapServerCredential;
+    private final Node node;
+    private final NodeMeta bootstrapServerNodeMeta;
     private DatagramSocket socket;
     private boolean regOk = false;
 
-    public NodeOpsUDP(Credential bootstrapServerCredential, Credential nodeCredential) {
-        this.bootstrapServerCredential = bootstrapServerCredential;
+    public NodeUDP(NodeMeta bootstrapServerNodeMeta, NodeMeta nodeNodeMeta) {
+        this.bootstrapServerNodeMeta = bootstrapServerNodeMeta;
 
         this.node = new Node();
-        node.setCredential(nodeCredential);
+        node.setCredential(nodeNodeMeta);
         node.setFileList(createFileList());
-        node.setRoutingTable(new ArrayList());
-        node.setStatTable(new ArrayList());
+        node.setRoutingTable(new ArrayList<>());
+        node.setStatTable(new ArrayList<>());
 
         this.start();
     }
@@ -49,7 +52,7 @@ public class NodeOpsUDP implements NodeOps, Runnable {
     @Override
     public void run() {
         System.out.println("Server " + this.node.getCredential().getUsername() + " created at " + this.node.getCredential().getPort() + ". Waiting for incoming data...");
-        byte buffer[];
+        byte[] buffer;
         DatagramPacket datagramPacket;
         while (true) {
             buffer = new byte[65536];
@@ -57,8 +60,8 @@ public class NodeOpsUDP implements NodeOps, Runnable {
             try {
                 socket.receive(datagramPacket);
                 String message = new String(datagramPacket.getData(), 0, datagramPacket.getLength());
-                Credential senderCredential = new Credential(datagramPacket.getAddress().getHostAddress(), datagramPacket.getPort(), null);
-                Message response = Parser.parse(message, senderCredential);
+                NodeMeta senderNodeMeta = new NodeMeta(datagramPacket.getAddress().getHostAddress(), datagramPacket.getPort(), null);
+                Message response = CommandParser.parse(message, senderNodeMeta);
                 processResponse(response);
             } catch (IOException e) {
                 e.printStackTrace();
@@ -78,10 +81,10 @@ public class NodeOpsUDP implements NodeOps, Runnable {
 
     @Override
     public void register() {
-        RegisterRequest registerRequest = new RegisterRequest(node.getCredential());
-        String msg = registerRequest.getMessageAsString(Constant.Command.REG);
+        org.uom.tesla.model.payload.Register registerRequest = new org.uom.tesla.model.payload.Register(node.getCredential());
+        String msg = registerRequest.getMessageAsString(Constants.REG);
         try {
-            socket.send(new DatagramPacket(msg.getBytes(), msg.getBytes().length, InetAddress.getByName(bootstrapServerCredential.getIp()), bootstrapServerCredential.getPort()));
+            socket.send(new DatagramPacket(msg.getBytes(), msg.getBytes().length, InetAddress.getByName(bootstrapServerNodeMeta.getIp()), bootstrapServerNodeMeta.getPort()));
         } catch (IOException e) {
             e.printStackTrace();
         }
@@ -89,52 +92,52 @@ public class NodeOpsUDP implements NodeOps, Runnable {
 
     @Override
     public void unRegister() {
-        UnregisterRequest unregisterRequest = new UnregisterRequest(node.getCredential());
-        String msg = unregisterRequest.getMessageAsString(Constant.Command.UNREG);
+        Unregister unregister = new Unregister(node.getCredential());
+        String msg = unregister.getMessageAsString(Constants.UN_REG);
         try {
-            socket.send(new DatagramPacket(msg.getBytes(), msg.getBytes().length, InetAddress.getByName(bootstrapServerCredential.getIp()), bootstrapServerCredential.getPort()));
+            socket.send(new DatagramPacket(msg.getBytes(), msg.getBytes().length, InetAddress.getByName(bootstrapServerNodeMeta.getIp()), bootstrapServerNodeMeta.getPort()));
         } catch (IOException e) {
             e.printStackTrace();
         }
     }
 
     @Override
-    public void join(Credential neighbourCredential) {
-        JoinRequest joinRequest = new JoinRequest(node.getCredential());
-        String msg = joinRequest.getMessageAsString(Constant.Command.JOIN);
+    public void join(NodeMeta neighbourNodeMeta) {
+        org.uom.tesla.model.payload.Join join = new org.uom.tesla.model.payload.Join(node.getCredential());
+        String msg = join.getMessageAsString(Constants.JOIN);
         try {
-            socket.send(new DatagramPacket(msg.getBytes(), msg.getBytes().length, InetAddress.getByName(neighbourCredential.getIp()), neighbourCredential.getPort()));
+            socket.send(new DatagramPacket(msg.getBytes(), msg.getBytes().length, InetAddress.getByName(neighbourNodeMeta.getIp()), neighbourNodeMeta.getPort()));
         } catch (IOException e) {
             e.printStackTrace();
         }
     }
 
     @Override
-    public void joinOk(Credential senderCredential) {
-        JoinResponse joinResponse = new JoinResponse(0, node.getCredential());
-        String msg = joinResponse.getMessageAsString(Constant.Command.JOINOK);
+    public void joinOk(NodeMeta senderNodeMeta) {
+        JoinData joinResponse = new JoinData(0, node.getCredential());
+        String msg = joinResponse.getMessageAsString(Constants.JOIN_OK);
         try {
-            socket.send(new DatagramPacket(msg.getBytes(), msg.getBytes().length, InetAddress.getByName(senderCredential.getIp()), senderCredential.getPort()));
+            socket.send(new DatagramPacket(msg.getBytes(), msg.getBytes().length, InetAddress.getByName(senderNodeMeta.getIp()), senderNodeMeta.getPort()));
         } catch (IOException e) {
             e.printStackTrace();
         }
     }
 
     @Override
-    public void leave(Credential neighbourCredential) {
-        LeaveRequest leaveRequest = new LeaveRequest(node.getCredential());
-        String msg = leaveRequest.getMessageAsString(Constant.Command.LEAVE);
+    public void leave(NodeMeta neighbourNodeMeta) {
+        org.uom.tesla.model.payload.Leave leave = new org.uom.tesla.model.payload.Leave(node.getCredential());
+        String msg = leave.getMessageAsString(Constants.LEAVE);
         try {
-            socket.send(new DatagramPacket(msg.getBytes(), msg.getBytes().length, InetAddress.getByName(neighbourCredential.getIp()), neighbourCredential.getPort()));
+            socket.send(new DatagramPacket(msg.getBytes(), msg.getBytes().length, InetAddress.getByName(neighbourNodeMeta.getIp()), neighbourNodeMeta.getPort()));
         } catch (IOException e) {
             e.printStackTrace();
         }
     }
 
     @Override
-    public void leaveOk(Credential senderCredentials) {
-        LeaveResponse leaveResponse = new LeaveResponse(0);
-        String msg = leaveResponse.getMessageAsString(Constant.Command.LEAVEOK);
+    public void leaveOk(NodeMeta senderCredentials) {
+        LeaveData leaveResponse = new LeaveData(0);
+        String msg = leaveResponse.getMessageAsString(Constants.LEAVE_OK);
         try {
             socket.send(new DatagramPacket(msg.getBytes(), msg.getBytes().length, InetAddress.getByName(senderCredentials.getIp()), senderCredentials.getPort()));
         } catch (IOException e) {
@@ -143,8 +146,8 @@ public class NodeOpsUDP implements NodeOps, Runnable {
     }
 
     @Override
-    public void search(SearchRequest searchRequest, Credential sendCredentials) {
-        String msg = searchRequest.getMessageAsString(Constant.Command.SEARCH);
+    public void search(Search search, NodeMeta sendCredentials) {
+        String msg = search.getMessageAsString(Constants.SEARCH);
         try {
             socket.send(new DatagramPacket(msg.getBytes(), msg.getBytes().length, InetAddress.getByName(sendCredentials.getIp()), sendCredentials.getPort()));
         } catch (IOException e) {
@@ -153,8 +156,8 @@ public class NodeOpsUDP implements NodeOps, Runnable {
     }
 
     @Override
-    public void searchOk(SearchResponse searchResponse) {
-        String msg = searchResponse.getMessageAsString(Constant.Command.SEARCHOK);
+    public void searchOk(SearchData searchResponse) {
+        String msg = searchResponse.getMessageAsString(Constants.SEARCH_OK);
         try {
             socket.send(new DatagramPacket(msg.getBytes(), msg.getBytes().length, InetAddress.getByName(searchResponse.getCredential().getIp()), searchResponse.getCredential().getPort()));
         } catch (IOException e) {
@@ -163,11 +166,11 @@ public class NodeOpsUDP implements NodeOps, Runnable {
     }
 
     @Override
-    public void error(Credential senderCredential) {
-        ErrorResponse errorResponse = new ErrorResponse();
-        String msg = errorResponse.getMessageAsString(Constant.Command.ERROR);
+    public void error(NodeMeta senderNodeMeta) {
+        Error errorResponse = new Error();
+        String msg = errorResponse.getMessageAsString(Constants.ERROR);
         try {
-            socket.send(new DatagramPacket(msg.getBytes(), msg.getBytes().length, InetAddress.getByName(senderCredential.getIp()), senderCredential.getPort()));
+            socket.send(new DatagramPacket(msg.getBytes(), msg.getBytes().length, InetAddress.getByName(senderNodeMeta.getIp()), senderNodeMeta.getPort()));
         } catch (IOException e) {
             e.printStackTrace();
         }
@@ -204,79 +207,63 @@ public class NodeOpsUDP implements NodeOps, Runnable {
 
     @Override
     public void processResponse(Message response) {
-        if (response instanceof RegisterResponse) {
-            RegisterResponse registerResponse = (RegisterResponse) response;
-            if (registerResponse.getNoOfNodes() == Constant.Codes.Register.ERROR_ALREADY_REGISTERED) {
+        if (response instanceof RegisterData) {
+            RegisterData registerResponse = (RegisterData) response;
+            if (registerResponse.getNoOfNodes() == Constants.ERROR_ALREADY_REGISTERED) {
                 System.out.println("Already registered at Bootstrap with same username");
-                Credential credential = node.getCredential();
-                credential.setUsername(UUID.randomUUID().toString());
-                node.setCredential(credential);
+                NodeMeta nodeMeta = node.getCredential();
+                nodeMeta.setUsername(UUID.randomUUID().toString());
+                node.setCredential(nodeMeta);
                 register();
-            } else if (registerResponse.getNoOfNodes() == Constant.Codes.Register.ERROR_DUPLICATE_IP) {
+            } else if (registerResponse.getNoOfNodes() == Constants.ERROR_DUPLICATE_IP) {
                 System.out.println("Already registered at Bootstrap with same port");
-                Credential credential = node.getCredential();
-                credential.setPort(credential.getPort() + 1);
-                node.setCredential(credential);
+                NodeMeta nodeMeta = node.getCredential();
+                nodeMeta.setPort(nodeMeta.getPort() + 1);
+                node.setCredential(nodeMeta);
                 register();
-            } else if (registerResponse.getNoOfNodes() == Constant.Codes.Register.ERROR_CANNOT_REGISTER) {
-                System.out.printf("Can’t register. Bootstrap server full. Try again later");
-            } else if (registerResponse.getNoOfNodes() == Constant.Codes.Register.ERROR_COMMAND) {
+            } else if (registerResponse.getNoOfNodes() == Constants.ERROR_CANNOT_REGISTER) {
+                System.out.print("Can’t register. Bootstrap server full. Try again later");
+            } else if (registerResponse.getNoOfNodes() == Constants.ERROR_COMMAND) {
                 System.out.println("Error in command");
             } else {
-                List<Credential> credentialList = registerResponse.getCredentials();
-                ArrayList<Credential> routingTable = new ArrayList();
-                for (Credential credential : credentialList) {
-                    routingTable.add(credential);
-                }
+                List<NodeMeta> nodeMetaList = registerResponse.getCredentials();
+                ArrayList<NodeMeta> routingTable = new ArrayList<>(nodeMetaList);
                 printRoutingTable(routingTable);
-                //TODO: check whether the received nodes are alive before adding to routing table
                 this.node.setRoutingTable(routingTable);
                 this.regOk = true;
             }
 
-        } else if (response instanceof UnregisterResponse) {
-            //TODO: set leave request for all of the nodes at routing table
+        } else if (response instanceof UnregisterData) {
             node.setRoutingTable(new ArrayList<>());
             node.setFileList(new ArrayList<>());
             node.setStatTable(new ArrayList<>());
             this.regOk = false;
 
-        } else if (response instanceof SearchRequest) {
-            SearchRequest searchRequest = (SearchRequest) response;
-            triggerSearchRequest(searchRequest);
-
-        } else if (response instanceof SearchResponse) {
-            SearchResponse searchResponse = (SearchResponse) response;
-            if (searchResponse.getNoOfFiles() == Constant.Codes.Search.ERROR_NODE_UNREACHABLE) {
+        } else if (response instanceof Search search) {
+            triggerSearchRequest(search);
+        } else if (response instanceof SearchData searchResponse) {
+            if (searchResponse.getNoOfFiles() == Constants.ERROR_NODE_UNREACHABLE) {
                 System.out.println("Failure due to node unreachable");
-            } else if (searchResponse.getNoOfFiles() == Constant.Codes.Search.ERROR_OTHER) {
+            } else if (searchResponse.getNoOfFiles() == Constants.ERROR_OTHER) {
                 System.out.println("Some other error");
             } else {
                 System.out.println("--------------------------------------------------------");
-                System.out.println(searchResponse.toString());
+                System.out.println(searchResponse);
                 System.out.println("--------------------------------------------------------");
             }
-
-        } else if (response instanceof JoinRequest) {
+        } else if (response instanceof org.uom.tesla.model.payload.Join) {
             joinOk(node.getCredential());
-
-        } else if (response instanceof JoinResponse) {
-            JoinResponse joinResponse = (JoinResponse) response;
-            List<Credential> routingTable = node.getRoutingTable();
+        } else if (response instanceof JoinData joinResponse) {
+            List<NodeMeta> routingTable = node.getRoutingTable();
             routingTable.add(joinResponse.getSenderCredential());
             node.setRoutingTable(routingTable);
-
-        } else if (response instanceof LeaveRequest) {
-            LeaveRequest leaveRequest = (LeaveRequest) response;
-            List<Credential> routingTable = node.getRoutingTable();
-            routingTable.remove(leaveRequest.getCredential());
+        } else if (response instanceof Leave leave) {
+            List<NodeMeta> routingTable = node.getRoutingTable();
+            routingTable.remove(leave.getCredential());
             node.setRoutingTable(routingTable);
 
-        } else if (response instanceof LeaveResponse) {
-            //Nothing to do here
-
-        } else if (response instanceof ErrorResponse) {
-            ErrorResponse errorResponse = (ErrorResponse) response;
+        } else if (response instanceof Error) {
+            Error errorResponse = (Error) response;
             System.out.println(errorResponse.toString());
         }
     }
@@ -293,27 +280,27 @@ public class NodeOpsUDP implements NodeOps, Runnable {
     }
 
     @Override
-    public void printRoutingTable(List<Credential> routingTable) {
+    public void printRoutingTable(List<NodeMeta> routingTable) {
         System.out.println("Routing table updated as :");
         System.out.println("--------------------------------------------------------");
         System.out.println("IP \t \t \t PORT");
-        for (Credential credential : routingTable) {
-            System.out.println(credential.getIp() + "\t" + credential.getPort());
+        for (NodeMeta nodeMeta : routingTable) {
+            System.out.println(nodeMeta.getIp() + "\t" + nodeMeta.getPort());
         }
         System.out.println("--------------------------------------------------------");
     }
 
     @Override
-    public void triggerSearchRequest(SearchRequest searchRequest) {
-        System.out.println("\nTriggered search request for " + searchRequest.getFileName());
-        List<String> searchResult = checkForFiles(searchRequest.getFileName(), node.getFileList());
+    public void triggerSearchRequest(Search search) {
+        System.out.println("\nTriggered search request for " + search.getFileName());
+        List<String> searchResult = checkForFiles(search.getFileName(), node.getFileList());
         if (!searchResult.isEmpty()) {
             System.out.println("File is available at " + node.getCredential().getIp() + " : " + node.getCredential().getPort());
-            SearchResponse searchResponse = new SearchResponse(searchRequest.getSequenceNo(), searchResult.size(), searchRequest.getCredential(), searchRequest.getHops(), searchResult);
+            SearchData searchResponse = new SearchData(search.getSequenceNo(), searchResult.size(), search.getCredential(), search.getHops(), searchResult);
 
             downloadFile(node.getCredential().getIp(), node.getCredential().getPort() + 1);
 
-            if (searchRequest.getCredential().getIp() == node.getCredential().getIp() && searchRequest.getCredential().getPort() == node.getCredential().getPort()) {
+            if (search.getCredential().getIp() == node.getCredential().getIp() && search.getCredential().getPort() == node.getCredential().getPort()) {
                 System.out.println(searchResponse.toString());
             } else {
                 System.out.println("Send SEARCHOK response message");
@@ -322,10 +309,10 @@ public class NodeOpsUDP implements NodeOps, Runnable {
 
         } else {
             System.out.println("File is not available at " + node.getCredential().getIp() + " : " + node.getCredential().getPort());
-            searchRequest.setHops(searchRequest.incHops());
-            for (Credential credential : node.getRoutingTable()) {
-                search(searchRequest, credential);
-                System.out.println("Send SER request message to " + credential.getIp() + " : " + credential.getPort());
+            search.setHops(search.incHops());
+            for (NodeMeta nodeMeta : node.getRoutingTable()) {
+                search(search, nodeMeta);
+                System.out.println("Send SER request message to " + nodeMeta.getIp() + " : " + nodeMeta.getPort());
             }
         }
     }

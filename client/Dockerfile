@@ -1,9 +1,9 @@
-FROM openjdk:11
+FROM openjdk:17
 
 WORKDIR /app
 
 COPY . /app
 
-RUN ["javac", "org/uom/tesla/controller/BootstrapNode.java"]
+RUN ["javac", "org/uom/tesla/TestClient.java"]
 
-CMD ["java", "org/uom/tesla/controller/BootstrapNode"]
+CMD ["java", "org/uom/tesla/TestClient"]

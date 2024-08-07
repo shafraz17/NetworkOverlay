@@ -13,7 +13,7 @@ cd NetworkOverlay
 
 ## Requirements
 
-- Java Development Kit (JDK) 11
+- Java Development Kit (JDK) 17
 
 ## Initializing the Overlay Network
 
@@ -80,8 +80,8 @@ cd NetworkOverlay
 ### Compile the Server and Client
 
 ```sh
-javac BootstrapServer.java
-javac BootstrapClient.java
+javac org/uom/tesla/TestClient.java
+javac org/uom/tesla/BootstrapServer.java
 ```
 
 ### Running the Server and Clients
@@ -89,6 +89,6 @@ javac BootstrapClient.java
 User the below commands in separate terminals
 
 ```sh
-java BootstrapServer
-java BootstrapClient
+java org/uom/tesla/TestClient
+java org/uom/tesla/BootstrapServer
 ```
