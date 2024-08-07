@@ -4,6 +4,6 @@ WORKDIR /app
 
 COPY . /app
 
-RUN ["javac", "BootstrapClient.java"]
+RUN ["javac", "org/uom/tesla/controller/BootstrapNode.java"]
 
-CMD ["java", "BootstrapClient"]
+CMD ["java", "org/uom/tesla/controller/BootstrapNode"]

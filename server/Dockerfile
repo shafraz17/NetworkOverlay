@@ -4,6 +4,6 @@ WORKDIR /app
 
 COPY . /app
 
-RUN ["javac", "BootstrapServer.java"]
+RUN ["javac", "org/uom/tesla/BootstrapServer.java"]
 
-CMD ["java", "BootstrapServer"]
+CMD ["java", "org/uom/tesla/BootstrapServer.java"]
