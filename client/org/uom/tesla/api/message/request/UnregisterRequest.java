@@ -6,6 +6,15 @@ import org.uom.tesla.api.message.Message;
 public class UnregisterRequest extends Message {
 
     private Credential credential;
+    private int sequenceNumber;
+
+    public int getSequenceNumber() {
+        return sequenceNumber;
+    }
+
+    public void setSequenceNumber(int sequenceNumber) {
+        this.sequenceNumber = sequenceNumber;
+    }
 
     public UnregisterRequest(Credential credential) {
         this.credential = credential;
