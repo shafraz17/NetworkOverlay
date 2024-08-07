@@ -8,7 +8,6 @@ import java.io.OutputStream;
 import java.io.PrintWriter;
 import java.net.DatagramPacket;
 import java.net.DatagramSocket;
-import java.net.InetAddress;
 import java.net.InetSocketAddress;
 import java.security.MessageDigest;
 import java.security.NoSuchAlgorithmException;
@@ -16,16 +15,6 @@ import java.util.ArrayList;
 import java.util.List;
 import java.util.Random;
 import java.util.StringTokenizer;
-
-import java.io.IOException;
-import java.io.OutputStream;
-import java.net.InetSocketAddress;
-import java.security.MessageDigest;
-import java.security.NoSuchAlgorithmException;
-
-import com.sun.net.httpserver.HttpServer;
-import com.sun.net.httpserver.HttpHandler;
-import com.sun.net.httpserver.HttpExchange;
 import java.util.Date;
 import java.util.HashMap;
 import java.util.Map;
@@ -242,6 +231,7 @@ public class BootstrapServer {
         catch(Exception e)
         {
             System.err.println("IOException " + e);
+            e.printStackTrace();
         }
     }
 
