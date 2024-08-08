@@ -382,11 +382,10 @@ public class NodeUDP implements org.uom.tesla.utils.NodeUDP, Runnable {
     private static void downloadFile(String ip, Integer port) {
         try {
             int size = new Random().nextInt(7) + 3; // Generate a size between 2 and 10 MB
-            String url = "http:" + ip + ":" + port + "/file?size=" + size;
-//            String url = "http:" + "localhost" + ":" + port + "/file?size=" + size;
+            String url = "http://" + ip + ":" + port + "/file?size=" + size;
 
             URL obj = URI.create(url).toURL();
-            HttpURLConnection con = (HttpURLConnection) obj.openConnection(Proxy.NO_PROXY);
+            HttpURLConnection con = (HttpURLConnection)obj.openConnection();
             con.setRequestMethod("GET");
 
             int responseCode = con.getResponseCode();
@@ -401,8 +400,8 @@ public class NodeUDP implements org.uom.tesla.utils.NodeUDP, Runnable {
                 }
                 in.close();
 
-                System.out.printf("File size: " + size);
-                System.out.println("Response:" + response.toString());
+                System.out.println("File size: " + size);
+                System.out.println("Response:\n" + response.toString());
             } else {
                 System.out.println("GET request not worked");
             }
